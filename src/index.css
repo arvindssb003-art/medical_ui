@@ -109,3 +109,87 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+.page {
+  min-height: 70vh;
+  padding: 60px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page h1 {
+  font-size: 36px;
+  margin-bottom: 12px;
+  color: #111827;
+}
+
+.page p {
+  color: #6b7280;
+  font-size: 16px;
+}
+.not-found-page {
+  min-height: 75vh;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+  padding: 40px 20px;
+
+  color: #374151;
+}
+
+.not-found-page svg {
+  color: #0f766e;
+  margin-bottom: 15px;
+}
+
+.not-found-page h1 {
+  margin: 0;
+  font-size: 90px;
+  line-height: 1;
+  color: #0f766e;
+}
+
+.not-found-page h2 {
+  margin: 15px 0 10px;
+  font-size: 28px;
+  color: #111827;
+}
+
+.not-found-page p {
+  max-width: 500px;
+  margin-bottom: 25px;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.not-found-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 12px 20px;
+
+  background: #0f766e;
+  color: white;
+
+  border-radius: 8px;
+
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.not-found-button:hover {
+  background: #115e59;
+}
+.app-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-content {
+  flex: 1;
+}

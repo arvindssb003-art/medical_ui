@@ -122,14 +122,14 @@ function Home() {
 
       </main>
 
-      <footer className="footer">
+      {/* <footer className="footer">
         <div>
           <strong>MediCare</strong>
           <p>Your trusted digital healthcare platform.</p>
         </div>
 
         <p>© 2026 MediCare. All rights reserved.</p>
-      </footer>
+      </footer> */}
 
     </div>
   );
