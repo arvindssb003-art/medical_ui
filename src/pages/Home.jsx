@@ -7,14 +7,14 @@ import {
   Pill,
   FileText,
 } from "lucide-react";
-import Navbar from "../components/layout/Navbar";
+// import Navbar from "../components/layout/Navbar";
 import "./Home.css";
 
 function Home() {
   return (
     <div className="home">
 
-      <Navbar />
+      {/* <Navbar /> */}
 
       <main>
 
