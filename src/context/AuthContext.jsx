@@ -18,7 +18,12 @@ export function AuthProvider({ children }) {
     const savedRefreshToken = localStorage.getItem("refreshToken");
 
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (error) {
+        console.error("Invalid stored user data:", error);
+        localStorage.removeItem("user");
+      }
     }
 
     if (savedAccessToken) {
@@ -59,7 +64,7 @@ export function AuthProvider({ children }) {
         await logoutUser(refreshToken);
       }
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error("Logout failed:", error);
     } finally {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");

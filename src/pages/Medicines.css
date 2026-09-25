@@ -194,3 +194,78 @@
     padding: 30px 16px;
   }
 }
+.medicine-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.medicine-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.medicine-card h2 {
+  margin: 0 0 6px;
+  font-size: 19px;
+  color: #111827;
+}
+
+.medicine-generic {
+  margin: 0 0 12px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.medicine-category {
+  display: inline-block;
+  margin: 0 0 14px;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.medicine-description {
+  margin: 0 0 20px;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.medicine-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.medicine-card-footer strong {
+  font-size: 18px;
+  color: #111827;
+}
+
+.prescription-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #92400e;
+  background: #fef3c7;
+  padding: 5px 8px;
+  border-radius: 5px;
+}
+.medicine-manufacturer {
+  margin: 0 0 18px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.medicine-manufacturer strong {
+  color: #374151;
+}
+
+.medicine-filters input[type="radio"] {
+  width: 16px;
+  height: 16px;
+}

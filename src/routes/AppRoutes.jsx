@@ -16,6 +16,7 @@ import Prescriptions from "../pages/Prescriptions";
 import Profile from "../pages/Profile";
 import MedicalAssistant from "../pages/MedicalAssistant";
 import NotFound from "../pages/NotFound";
+import ProtectedRoute from "./ProtectedRoute";
 
 function AppRoutes() {
   return (
@@ -53,9 +54,11 @@ function AppRoutes() {
         <Route
           path="/cart"
           element={
-            <PageLayout>
-              <Cart />
-            </PageLayout>
+            <ProtectedRoute>
+              <PageLayout>
+                <Cart />
+              </PageLayout>
+            </ProtectedRoute>
           }
         />
 

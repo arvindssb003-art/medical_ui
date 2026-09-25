@@ -44,7 +44,7 @@ function Login() {
       setLoading(false);
     }
   };
-
+ console.log("LOGIN PAGE LOADED");
   return (
     <div className="auth-page">
       <div className="auth-card">

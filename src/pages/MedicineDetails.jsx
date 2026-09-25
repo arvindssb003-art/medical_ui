@@ -7,12 +7,76 @@ import {
   ShoppingCart,
   ShieldCheck,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getMedicineById } from "../services/medicineApi";
 import "./MedicineDetails.css";
 
 function MedicineDetails() {
   const { id } = useParams();
+
+  const [medicine, setMedicine] = useState(null);
   const [quantity, setQuantity] = useState(1);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const loadMedicine = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const data = await getMedicineById(id);
+
+        console.log("MEDICINE DETAILS API:", data);
+
+        setMedicine(data);
+      } catch (err) {
+        console.error("MEDICINE DETAILS API ERROR:", err);
+
+        setError(
+          err.response?.data?.message ||
+            "Unable to load medicine details."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMedicine();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="medicine-details-page">
+        <Link to="/medicines" className="back-link">
+          <ArrowLeft size={18} />
+          Back to Medicines
+        </Link>
+
+        <div className="medicine-empty">
+          <h2>Loading medicine...</h2>
+          <p>Please wait while we load the medicine details.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !medicine) {
+    return (
+      <div className="medicine-details-page">
+        <Link to="/medicines" className="back-link">
+          <ArrowLeft size={18} />
+          Back to Medicines
+        </Link>
+
+        <div className="medicine-empty">
+          <h2>Medicine not found</h2>
+          <p>{error || "The requested medicine could not be found."}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="medicine-details-page">
@@ -33,32 +97,29 @@ function MedicineDetails() {
         <section className="medicine-info">
 
           <span className="medicine-category">
-            Healthcare Product
+            {medicine.category}
           </span>
 
-          <h1>Medicine Name</h1>
+          <h1>{medicine.name}</h1>
 
           <p className="medicine-id">
-            Product ID: {id}
+            Product ID: {medicine.id}
           </p>
 
-          <div className="medicine-rating">
-            ★★★★★
-            <span>4.8 (120 reviews)</span>
-          </div>
-
           <p className="medicine-description">
-            Medicine description and important product information
-            will be loaded from the medicine service.
+            {medicine.description}
           </p>
 
           <div className="medicine-price">
-            ₹0.00
+            ₹{Number(medicine.price).toFixed(2)}
           </div>
 
           <div className="stock-status">
             <span className="stock-dot" />
-            Availability will be checked from inventory
+
+            {medicine.active
+              ? "Available"
+              : "Currently unavailable"}
           </div>
 
           <div className="quantity-section">
@@ -68,8 +129,11 @@ function MedicineDetails() {
             <div className="quantity-control">
 
               <button
+                type="button"
                 onClick={() =>
-                  setQuantity((current) => Math.max(1, current - 1))
+                  setQuantity((current) =>
+                    Math.max(1, current - 1)
+                  )
                 }
               >
                 <Minus size={16} />
@@ -78,7 +142,10 @@ function MedicineDetails() {
               <span>{quantity}</span>
 
               <button
-                onClick={() => setQuantity((current) => current + 1)}
+                type="button"
+                onClick={() =>
+                  setQuantity((current) => current + 1)
+                }
               >
                 <Plus size={16} />
               </button>
@@ -89,12 +156,18 @@ function MedicineDetails() {
 
           <div className="medicine-actions">
 
-            <button className="add-cart-button">
+            <button
+              type="button"
+              className="add-cart-button"
+            >
               <ShoppingCart size={20} />
               Add to Cart
             </button>
 
-            <button className="wishlist-button">
+            <button
+              type="button"
+              className="wishlist-button"
+            >
               <Heart size={20} />
             </button>
 
@@ -106,9 +179,10 @@ function MedicineDetails() {
 
             <div>
               <strong>Safe & Trusted</strong>
+
               <p>
-                Product information and availability will be
-                verified through our backend services.
+                Product information is provided by our
+                medicine service.
               </p>
             </div>
 
@@ -126,22 +200,32 @@ function MedicineDetails() {
 
           <div>
             <span>Manufacturer</span>
-            <strong>To be loaded</strong>
+            <strong>
+              {medicine.manufacturer || "Not available"}
+            </strong>
+          </div>
+
+          <div>
+            <span>Generic Name</span>
+            <strong>
+              {medicine.genericName || "Not available"}
+            </strong>
           </div>
 
           <div>
             <span>Category</span>
-            <strong>To be loaded</strong>
-          </div>
-
-          <div>
-            <span>Dosage</span>
-            <strong>To be loaded</strong>
+            <strong>
+              {medicine.category || "Not available"}
+            </strong>
           </div>
 
           <div>
             <span>Prescription Required</span>
-            <strong>To be loaded</strong>
+            <strong>
+              {medicine.prescriptionRequired
+                ? "Yes"
+                : "No"}
+            </strong>
           </div>
 
         </div>
@@ -151,5 +235,4 @@ function MedicineDetails() {
     </div>
   );
 }
-
 export default MedicineDetails;
