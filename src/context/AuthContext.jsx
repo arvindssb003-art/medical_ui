@@ -4,6 +4,7 @@ import {
   logoutUser,
   registerUser,
 } from "../services/authApi";
+import { getUserProfile } from "../services/userApi";
 
 const AuthContext = createContext(null);
 
@@ -11,6 +12,10 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
   const [refreshToken, setRefreshToken] = useState(null);
+
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    Boolean(localStorage.getItem("accessToken"))
+  );
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
@@ -41,15 +46,15 @@ export function AuthProvider({ children }) {
     localStorage.setItem("accessToken", data.accessToken);
     localStorage.setItem("refreshToken", data.refreshToken);
 
-    const loggedInUser = {
-      username: credentials.username,
-    };
-
-    localStorage.setItem("user", JSON.stringify(loggedInUser));
-
     setAccessToken(data.accessToken);
     setRefreshToken(data.refreshToken);
-    setUser(loggedInUser);
+
+    const profile = await getUserProfile();
+
+    localStorage.setItem("user", JSON.stringify(profile));
+
+    setUser(profile);
+    setIsAuthenticated(true);
 
     return data;
   };
@@ -73,6 +78,7 @@ export function AuthProvider({ children }) {
       setAccessToken(null);
       setRefreshToken(null);
       setUser(null);
+      setIsAuthenticated(false);
     }
   };
 

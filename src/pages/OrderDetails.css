@@ -372,4 +372,64 @@
     margin-left: auto;
   }
 }
+.order-loading {
+  padding: 40px;
+  border: 1px solid #e1eaeb;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #718589;
+  text-align: center;
+}
+
+.order-error {
+  padding: 16px;
+  border: 1px solid #f3caca;
+  border-radius: 10px;
+  background: #fff5f5;
+  color: #b42318;
+  font-size: 14px;
+}
+
+.payment-processing-banner,
+.payment-success-banner,
+.payment-failed-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 14px 16px;
+  border-radius: 10px;
+}
+
+.payment-processing-banner {
+  border: 1px solid #f0dfaa;
+  background: #fffaf0;
+  color: #8a6700;
+}
+
+.payment-success-banner {
+  border: 1px solid #b8e2d8;
+  background: #f1fbf8;
+  color: #13776e;
+}
+
+.payment-failed-banner {
+  border: 1px solid #f3caca;
+  background: #fff5f5;
+  color: #b42318;
+}
+
+.payment-processing-banner div,
+.payment-success-banner div,
+.payment-failed-banner div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.payment-processing-banner span,
+.payment-success-banner span,
+.payment-failed-banner span {
+  font-size: 13px;
+}
 

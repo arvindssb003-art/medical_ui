@@ -279,3 +279,8 @@
     grid-template-columns: 1fr;
   }
 }
+.cart-message {
+  margin-top: 14px;
+  font-size: 14px;
+  font-weight: 500;
+}

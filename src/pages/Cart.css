@@ -285,3 +285,11 @@
     padding: 20px;
   }
 }
+.cart-error {
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: #fff1f2;
+  color: #b42318;
+  font-size: 14px;
+}

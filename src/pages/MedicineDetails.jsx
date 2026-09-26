@@ -9,16 +9,22 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getMedicineById } from "../services/medicineApi";
+import { addToCart } from "../services/cartApi";
+import { useAuth } from "../context/AuthContext";
 import "./MedicineDetails.css";
 
 function MedicineDetails() {
   const { id } = useParams();
+  const { user } = useAuth();
 
   const [medicine, setMedicine] = useState(null);
   const [quantity, setQuantity] = useState(1);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [cartMessage, setCartMessage] = useState("");
 
   useEffect(() => {
     const loadMedicine = async () => {
@@ -46,6 +52,43 @@ function MedicineDetails() {
     loadMedicine();
   }, [id]);
 
+  const handleAddToCart = async () => {
+    if (!user?.id) {
+      setCartMessage(
+        "Please login before adding items to your cart."
+      );
+      return;
+    }
+
+    if (!medicine?.id) {
+      return;
+    }
+
+    try {
+      setAddingToCart(true);
+      setCartMessage("");
+
+      const updatedCart = await addToCart(
+        user.id,
+        medicine.id,
+        quantity
+      );
+
+      console.log("ADD TO CART API:", updatedCart);
+
+      setCartMessage("Medicine added to cart.");
+    } catch (err) {
+      console.error("ADD TO CART ERROR:", err);
+
+      setCartMessage(
+        err.response?.data?.message ||
+          "Unable to add medicine to cart."
+      );
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="medicine-details-page">
@@ -56,7 +99,9 @@ function MedicineDetails() {
 
         <div className="medicine-empty">
           <h2>Loading medicine...</h2>
-          <p>Please wait while we load the medicine details.</p>
+          <p>
+            Please wait while we load the medicine details.
+          </p>
         </div>
       </div>
     );
@@ -72,7 +117,10 @@ function MedicineDetails() {
 
         <div className="medicine-empty">
           <h2>Medicine not found</h2>
-          <p>{error || "The requested medicine could not be found."}</p>
+          <p>
+            {error ||
+              "The requested medicine could not be found."}
+          </p>
         </div>
       </div>
     );
@@ -80,14 +128,12 @@ function MedicineDetails() {
 
   return (
     <div className="medicine-details-page">
-
       <Link to="/medicines" className="back-link">
         <ArrowLeft size={18} />
         Back to Medicines
       </Link>
 
       <div className="medicine-details">
-
         <section className="medicine-image-section">
           <div className="medicine-image-placeholder">
             <span>Medicine Image</span>
@@ -95,7 +141,6 @@ function MedicineDetails() {
         </section>
 
         <section className="medicine-info">
-
           <span className="medicine-category">
             {medicine.category}
           </span>
@@ -123,11 +168,9 @@ function MedicineDetails() {
           </div>
 
           <div className="quantity-section">
-
             <span>Quantity</span>
 
             <div className="quantity-control">
-
               <button
                 type="button"
                 onClick={() =>
@@ -135,6 +178,7 @@ function MedicineDetails() {
                     Math.max(1, current - 1)
                   )
                 }
+                disabled={addingToCart}
               >
                 <Minus size={16} />
               </button>
@@ -146,22 +190,27 @@ function MedicineDetails() {
                 onClick={() =>
                   setQuantity((current) => current + 1)
                 }
+                disabled={addingToCart}
               >
                 <Plus size={16} />
               </button>
-
             </div>
-
           </div>
 
           <div className="medicine-actions">
-
             <button
               type="button"
               className="add-cart-button"
+              onClick={handleAddToCart}
+              disabled={
+                addingToCart || !medicine.active
+              }
             >
               <ShoppingCart size={20} />
-              Add to Cart
+
+              {addingToCart
+                ? "Adding..."
+                : "Add to Cart"}
             </button>
 
             <button
@@ -170,11 +219,15 @@ function MedicineDetails() {
             >
               <Heart size={20} />
             </button>
-
           </div>
 
-          <div className="medicine-safety">
+          {cartMessage && (
+            <p className="cart-message">
+              {cartMessage}
+            </p>
+          )}
 
+          <div className="medicine-safety">
             <ShieldCheck size={22} />
 
             <div>
@@ -185,19 +238,14 @@ function MedicineDetails() {
                 medicine service.
               </p>
             </div>
-
           </div>
-
         </section>
-
       </div>
 
       <section className="medicine-information">
-
         <h2>Product Information</h2>
 
         <div className="information-grid">
-
           <div>
             <span>Manufacturer</span>
             <strong>
@@ -227,11 +275,8 @@ function MedicineDetails() {
                 : "No"}
             </strong>
           </div>
-
         </div>
-
       </section>
-
     </div>
   );
 }
