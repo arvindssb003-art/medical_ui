@@ -282,3 +282,44 @@
     grid-template-columns: 1fr;
   }
 }
+.cart-toast {
+  position: fixed;
+  top: 90px;
+  right: 24px;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 13px 18px;
+
+  background: #ffffff;
+  color: #166534;
+
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+  font-size: 14px;
+  font-weight: 600;
+
+  z-index: 2000;
+}
+
+.cart-toast-icon {
+  width: 22px;
+  height: 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #16a34a;
+  color: #ffffff;
+
+  font-size: 13px;
+  font-weight: 700;
+}
