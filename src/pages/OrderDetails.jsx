@@ -23,45 +23,56 @@ function OrderDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [checkingPayment, setCheckingPayment] = useState(false);
-
   useEffect(() => {
-    let intervalId;
+    let cancelled = false;
+
+    const loadPayment = async () => {
+      try {
+        const paymentData = await getPaymentByOrderId(id);
+
+        if (!cancelled) {
+          console.log("PAYMENT DETAILS API:", paymentData);
+          setPayment(paymentData);
+        }
+
+        return paymentData;
+      } catch (paymentError) {
+        if (
+          !cancelled &&
+          paymentError.response?.status !== 404
+        ) {
+          console.error(
+            "PAYMENT DETAILS API ERROR:",
+            paymentError
+          );
+        }
+
+        return null;
+      }
+    };
 
     const loadOrder = async () => {
       try {
-        setLoading(true);
-        setError("");
+        console.log("ORDER DETAILS API CALL:", id);
 
         const orderData = await getOrderById(id);
+
+        if (cancelled) {
+          return null;
+        }
 
         console.log("ORDER DETAILS API:", orderData);
 
         setOrder(orderData);
 
-        try {
-          const paymentData =
-            await getPaymentByOrderId(id);
-
-          console.log(
-            "PAYMENT DETAILS API:",
-            paymentData
-          );
-
-          setPayment(paymentData);
-        } catch (paymentError) {
-          // Payment may not exist yet because payment processing
-          // happens asynchronously.
-          if (paymentError.response?.status !== 404) {
-            console.error(
-              "PAYMENT DETAILS API ERROR:",
-              paymentError
-            );
-          }
-        }
+        await loadPayment();
 
         return orderData;
       } catch (err) {
+        if (cancelled) {
+          return null;
+        }
+
         console.error(
           "ORDER DETAILS API ERROR:",
           err
@@ -73,71 +84,24 @@ function OrderDetails() {
         );
 
         return null;
-      } finally {
+      }
+    };
+
+    const initialize = async () => {
+      setLoading(true);
+      setError("");
+
+      await loadOrder();
+
+      if (!cancelled) {
         setLoading(false);
       }
     };
 
-    const initialLoad = async () => {
-      const orderData = await loadOrder();
-
-      if (
-        orderData &&
-        orderData.status === "PAYMENT_PENDING"
-      ) {
-        setCheckingPayment(true);
-
-        intervalId = setInterval(async () => {
-          try {
-            const updatedOrder =
-              await getOrderById(id);
-
-            console.log(
-              "ORDER STATUS CHECK:",
-              updatedOrder.status
-            );
-
-            setOrder(updatedOrder);
-
-            try {
-              const paymentData =
-                await getPaymentByOrderId(id);
-
-              setPayment(paymentData);
-            } catch (paymentError) {
-              if (
-                paymentError.response?.status !== 404
-              ) {
-                console.error(
-                  "PAYMENT STATUS ERROR:",
-                  paymentError
-                );
-              }
-            }
-
-            if (
-              updatedOrder.status !==
-                "PAYMENT_PENDING"
-            ) {
-              clearInterval(intervalId);
-              setCheckingPayment(false);
-            }
-          } catch (err) {
-            console.error(
-              "ORDER STATUS CHECK ERROR:",
-              err
-            );
-          }
-        }, 2000);
-      }
-    };
-
-    initialLoad();
+    initialize();
 
     return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
+      cancelled = true;
     };
   }, [id]);
 
@@ -160,7 +124,8 @@ function OrderDetails() {
   const isPaymentPending =
     order?.status === "PAYMENT_PENDING";
 
-  const isPaid = order?.status === "PAID";
+  const isPaid =
+    order?.status === "PAID";
 
   const isCancelled =
     order?.status === "CANCELLED";
@@ -236,12 +201,14 @@ function OrderDetails() {
         </span>
       </div>
 
-      {checkingPayment && (
+      {isPaymentPending && (
         <div className="payment-processing-banner">
           <Clock3 size={18} />
 
           <div>
-            <strong>Payment is being processed</strong>
+            <strong>
+              Payment is being processed
+            </strong>
 
             <span>
               We are waiting for payment confirmation.
@@ -255,7 +222,9 @@ function OrderDetails() {
           <CheckCircle2 size={18} />
 
           <div>
-            <strong>Payment successful</strong>
+            <strong>
+              Payment successful
+            </strong>
 
             <span>
               Your order has been confirmed.
@@ -269,7 +238,9 @@ function OrderDetails() {
           <XCircle size={18} />
 
           <div>
-            <strong>Order cancelled</strong>
+            <strong>
+              Order cancelled
+            </strong>
 
             <span>
               The payment could not be completed.
@@ -352,7 +323,9 @@ function OrderDetails() {
                 </div>
 
                 <div>
-                  <strong>Preparing Order</strong>
+                  <strong>
+                    Preparing Order
+                  </strong>
 
                   <span>
                     Your medicines will be prepared
@@ -369,7 +342,9 @@ function OrderDetails() {
                 </div>
 
                 <div>
-                  <strong>Out for Delivery</strong>
+                  <strong>
+                    Out for Delivery
+                  </strong>
 
                   <span>
                     Your order will be on its way.
@@ -557,7 +532,9 @@ function OrderDetails() {
             <Truck size={19} />
 
             <div>
-              <strong>Estimated Delivery</strong>
+              <strong>
+                Estimated Delivery
+              </strong>
 
               <span>
                 To be calculated

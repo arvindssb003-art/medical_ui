@@ -10,7 +10,7 @@ function Footer() {
         <div className="footer-brand">
           <Link to="/" className="footer-logo">
             <HeartPulse size={26} />
-            MediCare
+            ArunCare
           </Link>
 
           <p>

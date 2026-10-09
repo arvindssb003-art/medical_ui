@@ -51,7 +51,7 @@ function Login() {
 
         <Link to="/" className="auth-logo">
           <HeartPulse size={32} />
-          MediCare
+          ArunCare
         </Link>
 
         <h1>Welcome Back</h1>

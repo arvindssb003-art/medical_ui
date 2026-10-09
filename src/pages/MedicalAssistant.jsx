@@ -173,7 +173,7 @@ function MedicineDetails() {
 
   const medicineDescription =
     medicine.description ||
-    "Quality healthcare medicine available through MediCare.";
+    "Quality healthcare medicine available through ArunCare.";
 
   const price = Number(medicine.price || 0);
 

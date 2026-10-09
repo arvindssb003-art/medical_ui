@@ -50,7 +50,7 @@ function Navbar() {
 
         <Link to="/" className="logo">
           <HeartPulse size={30} />
-          <span>MediCare</span>
+          <span>ArunCare</span>
         </Link>
 
         <div className="search-box">

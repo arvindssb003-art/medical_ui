@@ -72,7 +72,7 @@ function Register() {
 
         <Link to="/" className="auth-logo">
           <HeartPulse size={32} />
-          MediCare
+         ArunCare
         </Link>
 
         <h1>Create Account</h1>
