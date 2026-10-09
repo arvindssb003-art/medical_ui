@@ -84,6 +84,21 @@
   font-size: 14px;
 }
 
+.orders-message {
+  padding: 28px 20px;
+  border: 1px dashed #cedcdd;
+  border-radius: 14px;
+  background: #f9fcfc;
+  color: #718589;
+  text-align: center;
+}
+
+.orders-error {
+  border-color: #f0caca;
+  background: #fff8f8;
+  color: #a33c3c;
+}
+
 .orders-empty {
   padding: 48px 25px;
   border: 1px dashed #cedcdd;
@@ -134,9 +149,7 @@
   background: #117e76;
 }
 
-/* Hidden until real order data is connected */
-.order-card-placeholder {
-  display: none;
+.order-card {
   margin-top: 20px;
   padding: 20px;
   border: 1px solid #e0e9ea;
@@ -173,6 +186,29 @@
 .status-pending {
   background: #fff6df;
   color: #9a7419;
+}
+
+.status-payment-pending,
+.status-confirmed,
+.status-processing {
+  background: #fff6df;
+  color: #9a7419;
+}
+
+.status-paid,
+.status-delivered {
+  background: #e6f7ef;
+  color: #23734d;
+}
+
+.status-shipped {
+  background: #e8f2ff;
+  color: #3569a8;
+}
+
+.status-cancelled {
+  background: #fff0f0;
+  color: #a33c3c;
 }
 
 .order-card-info {
@@ -260,4 +296,3 @@
     flex-direction: column;
   }
 }
-

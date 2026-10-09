@@ -419,6 +419,38 @@
   color: #b42318;
 }
 
+.pay-now-button {
+  align-self: flex-start;
+  margin-top: 10px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 8px;
+  background: #15998f;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pay-now-button:hover:not(:disabled) {
+  background: #117e76;
+}
+
+.pay-now-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.payment-action-error {
+  margin-bottom: 24px;
+  padding: 12px 16px;
+  border: 1px solid #f3caca;
+  border-radius: 9px;
+  background: #fff5f5;
+  color: #b42318;
+  font-size: 14px;
+}
+
 .payment-processing-banner div,
 .payment-success-banner div,
 .payment-failed-banner div {
@@ -432,4 +464,3 @@
 .payment-failed-banner span {
   font-size: 13px;
 }
-

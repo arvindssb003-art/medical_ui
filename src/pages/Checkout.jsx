@@ -11,12 +11,20 @@ import {
   Building2,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { getCart } from "../services/cartApi";
-import { createOrder } from "../services/orderApi";
+import { useCart } from "../context/CartContext";
+import { clearCart, getCart } from "../services/cartApi";
+import { createOrder, getOrderById } from "../services/orderApi";
+import {
+  getPaymentByOrderId,
+  isPaymentSuccessfulForOrder,
+  openRazorpayCheckout,
+  verifyRazorpayPayment,
+} from "../services/paymentApi";
 import "./Checkout.css";
 
 function Checkout() {
   const { user } = useAuth();
+  const { refreshCartCount } = useCart();
   const navigate = useNavigate();
 
   const [cart, setCart] = useState(null);
@@ -24,6 +32,7 @@ function Checkout() {
 
   const [paymentMethod, setPaymentMethod] = useState("UPI");
   const [placingOrder, setPlacingOrder] = useState(false);
+  const [createdOrderId, setCreatedOrderId] = useState(null);
 
   const [error, setError] = useState("");
 
@@ -72,6 +81,99 @@ function Checkout() {
 
   const items = cart?.items || [];
 
+  const startPayment = async (orderId) => {
+    const emptyCart = async () => {
+      try {
+        await clearCart(user.id);
+      } catch (cartError) {
+        if (cartError.response?.status !== 404) {
+          throw cartError;
+        }
+      }
+
+      setCart({
+        id: null,
+        userId: user.id,
+        items: [],
+        totalAmount: 0,
+      });
+      await refreshCartCount();
+    };
+
+    let payment;
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      try {
+        payment = await getPaymentByOrderId(orderId);
+        if (payment.razorpayKeyId && payment.razorpayOrderId) {
+          break;
+        }
+      } catch (paymentError) {
+        if (paymentError.response?.status !== 404) {
+          throw paymentError;
+        }
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
+
+    if (!payment?.razorpayKeyId || !payment?.razorpayOrderId) {
+      throw new Error(
+        "Payment setup is taking longer than expected. Your order is saved; retry payment below."
+      );
+    }
+
+    if (isPaymentSuccessfulForOrder(payment, orderId)) {
+      const existingOrder = await getOrderById(orderId);
+      if (existingOrder.status === "PAID") {
+        await emptyCart();
+      }
+      navigate(`/orders/${orderId}`);
+      return;
+    }
+
+    const checkoutResponse = await openRazorpayCheckout(payment, orderId);
+    const verifiedPayment = await verifyRazorpayPayment(
+      orderId,
+      checkoutResponse
+    );
+    const persistedPayment = await getPaymentByOrderId(orderId);
+
+    if (
+      !isPaymentSuccessfulForOrder(verifiedPayment, orderId) ||
+      !isPaymentSuccessfulForOrder(persistedPayment, orderId)
+    ) {
+      throw new Error(
+        `The payment service has not confirmed payment for order ${orderId}. Its current status is ${persistedPayment?.status || verifiedPayment?.status || "unknown"}. Your cart has not been cleared.`
+      );
+    }
+
+    let confirmedOrder;
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      try {
+        confirmedOrder = await getOrderById(orderId);
+        if (confirmedOrder.status !== "PAYMENT_PENDING") {
+          break;
+        }
+      } catch (orderRefreshError) {
+        console.error(
+          "ORDER REFRESH AFTER PAYMENT ERROR:",
+          orderRefreshError
+        );
+        break;
+      }
+
+      if (attempt < 9) {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
+    }
+
+    if (confirmedOrder?.status === "PAID") {
+      await emptyCart();
+    }
+
+    navigate(`/orders/${orderId}`);
+  };
+
   const handlePlaceOrder = async () => {
     if (!user?.id) {
       setError("Please login before placing your order.");
@@ -89,27 +191,28 @@ function Checkout() {
       setPlacingOrder(true);
       setError("");
 
-      const orderData = {
-        items: items.map((item) => ({
-          medicineId: item.medicineId,
-          quantity: item.quantity,
-        })),
-        paymentMethod,
-      };
+      let orderId = createdOrderId;
+      if (!orderId) {
+        const orderData = {
+          items: items.map((item) => ({
+            medicineId: item.medicineId,
+            quantity: item.quantity,
+          })),
+          paymentMethod,
+        };
+        const order = await createOrder(orderData);
+        orderId = order.id;
+        setCreatedOrderId(orderId);
+      }
 
-      console.log("CREATE ORDER REQUEST:", orderData);
-
-      const order = await createOrder(orderData);
-
-      console.log("CREATE ORDER RESPONSE:", order);
-
-      navigate(`/orders/${order.id}`);
+      await startPayment(orderId);
     } catch (err) {
-      console.error("CREATE ORDER ERROR:", err);
+      console.error("ORDER/PAYMENT CHECKOUT ERROR:", err);
 
       setError(
         err.response?.data?.message ||
-          "Unable to place your order. Please try again."
+          err.message ||
+          "Unable to start payment. Please try again."
       );
     } finally {
       setPlacingOrder(false);
@@ -427,33 +530,6 @@ function Checkout() {
               </div>
             </label>
 
-            <label
-              className={`payment-option ${
-                paymentMethod === "COD"
-                  ? "selected"
-                  : ""
-              }`}
-            >
-              <input
-                type="radio"
-                name="payment"
-                value="COD"
-                checked={paymentMethod === "COD"}
-                onChange={(event) =>
-                  setPaymentMethod(event.target.value)
-                }
-              />
-
-              <Truck size={20} />
-
-              <div className="payment-option-content">
-                <strong>Cash on Delivery</strong>
-
-                <span>
-                  Pay when your order is delivered
-                </span>
-              </div>
-            </label>
           </section>
 
           <section className="checkout-card prescription-note">
@@ -541,13 +617,28 @@ function Checkout() {
             disabled={placingOrder}
           >
             {placingOrder
-              ? "Placing Order..."
-              : "Place Order"}
+              ? createdOrderId
+                ? "Preparing Secure Payment..."
+                : "Creating Order..."
+              : createdOrderId
+                ? "Retry Payment"
+                : "Place Order"}
 
             {!placingOrder && (
               <ArrowRight size={18} />
             )}
           </button>
+
+          {createdOrderId && (
+            <button
+              type="button"
+              className="checkout-order-details-button"
+              onClick={() => navigate(`/orders/${createdOrderId}`)}
+              disabled={placingOrder}
+            >
+              View order without paying now
+            </button>
+          )}
 
           <p className="secure-payment-note">
             <ShieldCheck size={16} />

@@ -305,6 +305,25 @@
   background: #117e76;
 }
 
+.place-order-button:disabled,
+.checkout-order-details-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.checkout-order-details-button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid #d7e2e3;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #486266;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
 .secure-payment-note {
   display: flex;
   align-items: center;
@@ -425,4 +444,3 @@
     align-items: flex-start;
   }
 }
-

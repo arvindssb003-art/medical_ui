@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -10,15 +10,32 @@ import {
   Truck,
   XCircle,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
+import { clearCart } from "../services/cartApi";
 import { getOrderById } from "../services/orderApi";
-import { getPaymentByOrderId } from "../services/paymentApi";
+import {
+  getPaymentByOrderId,
+  isPaymentSuccessfulForOrder,
+  openRazorpayCheckout,
+  verifyRazorpayPayment,
+} from "../services/paymentApi";
 import "./OrderDetails.css";
+
+function wait(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
 
 function OrderDetails() {
   const { id } = useParams();
+  const { user } = useAuth();
+  const { refreshCartCount } = useCart();
 
   const [order, setOrder] = useState(null);
   const [payment, setPayment] = useState(null);
+  const [paymentError, setPaymentError] = useState("");
+  const [startingPayment, setStartingPayment] = useState(false);
+  const cartClearedOrderId = useRef(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -31,16 +48,12 @@ function OrderDetails() {
         const paymentData = await getPaymentByOrderId(id);
 
         if (!cancelled) {
-          console.log("PAYMENT DETAILS API:", paymentData);
           setPayment(paymentData);
         }
 
         return paymentData;
       } catch (paymentError) {
-        if (
-          !cancelled &&
-          paymentError.response?.status !== 404
-        ) {
+        if (paymentError.response?.status !== 404) {
           console.error(
             "PAYMENT DETAILS API ERROR:",
             paymentError
@@ -53,20 +66,13 @@ function OrderDetails() {
 
     const loadOrder = async () => {
       try {
-        console.log("ORDER DETAILS API CALL:", id);
-
         const orderData = await getOrderById(id);
 
         if (cancelled) {
           return null;
         }
 
-        console.log("ORDER DETAILS API:", orderData);
-
         setOrder(orderData);
-
-        await loadPayment();
-
         return orderData;
       } catch (err) {
         if (cancelled) {
@@ -91,10 +97,61 @@ function OrderDetails() {
       setLoading(true);
       setError("");
 
-      await loadOrder();
+      try {
+        const currentOrder = await loadOrder();
+        if (currentOrder) {
+          let currentPayment = await loadPayment();
 
-      if (!cancelled) {
-        setLoading(false);
+          for (
+            let attempt = 0;
+            !cancelled &&
+            currentOrder.status === "PAYMENT_PENDING" &&
+            !currentPayment &&
+            attempt < 8;
+            attempt += 1
+          ) {
+            await wait(2500);
+            if (!cancelled) {
+              currentPayment = await loadPayment();
+            }
+          }
+
+          if (!cancelled) {
+            setLoading(false);
+          }
+
+          if (
+            !cancelled &&
+            currentOrder.status === "PAYMENT_PENDING" &&
+            isPaymentSuccessfulForOrder(currentPayment, currentOrder.id)
+          ) {
+            let latestOrder = currentOrder;
+            for (let attempt = 0; attempt < 10; attempt += 1) {
+              await wait(1500);
+              if (cancelled) {
+                break;
+              }
+
+              latestOrder = await loadOrder();
+              if (latestOrder?.status !== "PAYMENT_PENDING") {
+                break;
+              }
+            }
+
+            if (
+              !cancelled &&
+              latestOrder?.status === "PAYMENT_PENDING"
+            ) {
+              setPaymentError(
+                "The payment service reports success, but the order is still pending. Refresh shortly or contact support."
+              );
+            }
+          }
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
@@ -104,6 +161,106 @@ function OrderDetails() {
       cancelled = true;
     };
   }, [id]);
+
+  useEffect(() => {
+    if (
+      order?.status !== "PAID" ||
+      !isPaymentSuccessfulForOrder(payment, order.id) ||
+      !user?.id ||
+      cartClearedOrderId.current === order.id
+    ) {
+      return undefined;
+    }
+
+    let cancelled = false;
+    cartClearedOrderId.current = order.id;
+
+    const clearPaidOrderCart = async () => {
+      try {
+        await clearCart(user.id);
+      } catch (cartError) {
+        if (cartError.response?.status !== 404) {
+          cartClearedOrderId.current = null;
+          if (!cancelled) {
+            setPaymentError(
+              "Your order is paid, but the cart could not be cleared. Please refresh your cart."
+            );
+          }
+          return;
+        }
+      }
+
+      if (!cancelled) {
+        await refreshCartCount();
+      }
+    };
+
+    clearPaidOrderCart();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    order?.id,
+    order?.status,
+    payment,
+    user?.id,
+    refreshCartCount,
+  ]);
+
+  const handlePayNow = async () => {
+    if (!payment?.razorpayKeyId || !payment?.razorpayOrderId) {
+      setPaymentError("Secure checkout is not ready yet. Please wait and try again.");
+      return;
+    }
+
+    try {
+      setStartingPayment(true);
+      setPaymentError("");
+      const checkoutResponse = await openRazorpayCheckout(payment, order.id);
+      const verifiedPayment = await verifyRazorpayPayment(
+        order.id,
+        checkoutResponse
+      );
+      const persistedPayment = await getPaymentByOrderId(order.id);
+      if (
+        !isPaymentSuccessfulForOrder(verifiedPayment, order.id) ||
+        !isPaymentSuccessfulForOrder(persistedPayment, order.id)
+      ) {
+        throw new Error(
+          `The payment service has not confirmed payment for order ${order.id}. Its current status is ${persistedPayment?.status || verifiedPayment?.status || "unknown"}. Your cart has not been cleared.`
+        );
+      }
+
+      setPayment(persistedPayment);
+      setPaymentError("");
+
+      let updatedOrder;
+      for (let attempt = 0; attempt < 10; attempt += 1) {
+        updatedOrder = await getOrderById(id);
+        setOrder(updatedOrder);
+        if (updatedOrder.status !== "PAYMENT_PENDING") {
+          break;
+        }
+        await wait(1500);
+      }
+
+      if (updatedOrder?.status === "PAYMENT_PENDING") {
+        setPaymentError(
+          "The payment service reports success, but the order is still pending. Cart contents are unchanged until the order is paid."
+        );
+      }
+    } catch (checkoutError) {
+      console.error("RAZORPAY CHECKOUT ERROR:", checkoutError);
+      setPaymentError(
+        checkoutError.response?.data?.message ||
+          checkoutError.message ||
+          "Unable to start Razorpay Checkout."
+      );
+    } finally {
+      setStartingPayment(false);
+    }
+  };
 
   const getStatusLabel = (status) => {
     switch (status) {
@@ -123,6 +280,9 @@ function OrderDetails() {
 
   const isPaymentPending =
     order?.status === "PAYMENT_PENDING";
+
+  const isPaymentConfirmed =
+    isPaymentSuccessfulForOrder(payment, order?.id);
 
   const isPaid =
     order?.status === "PAID";
@@ -207,13 +367,40 @@ function OrderDetails() {
 
           <div>
             <strong>
-              Payment is being processed
+              {isPaymentConfirmed
+                ? "Payment received"
+                : payment?.razorpayOrderId
+                ? "Complete your payment"
+                : "Preparing secure checkout"}
             </strong>
 
             <span>
-              We are waiting for payment confirmation.
+              {isPaymentConfirmed
+                ? "Payment succeeded, but the order is pending confirmation. Your cart will remain until the order is paid."
+                : payment?.razorpayOrderId
+                ? `Pay ₹${Number(payment.amount).toFixed(2)} securely with Razorpay.`
+                : "Your payment session is being created. This page will update automatically."}
             </span>
+
+            {payment?.status === "PENDING" &&
+              payment.razorpayOrderId &&
+              payment.razorpayKeyId && (
+                <button
+                  type="button"
+                  className="pay-now-button"
+                  onClick={handlePayNow}
+                  disabled={startingPayment}
+                >
+                  {startingPayment ? "Opening checkout..." : "Pay securely now"}
+                </button>
+              )}
           </div>
+        </div>
+      )}
+
+      {paymentError && (
+        <div className="payment-action-error" role="alert">
+          {paymentError}
         </div>
       )}
 
