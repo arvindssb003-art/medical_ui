@@ -88,6 +88,27 @@
   font-size: 14px;
 }
 
+.password-visibility-toggle {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 2px;
+  border: 0;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.password-visibility-toggle:hover {
+  color: #0f766e;
+}
+
+.password-visibility-toggle:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 .plain-input {
   width: 100%;
   box-sizing: border-box;

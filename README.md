@@ -30,27 +30,23 @@ The medicine admin screen uses the medicine and inventory API routes:
 - `PUT /api/medicines/{id}`
 - `POST /api/inventory` with `medicineId`, `availableQuantity`,
   `reservedQuantity`, and `reorderLevel`
-- `POST /api/medicines/{id}/image` as multipart form data with field `file`
 - `POST /api/medicines/import/preview` as multipart form data with field `file`
 - `POST /api/medicines/import/{importId}/commit`
 
-The medicine and inventory endpoint paths exist in the backend, but gateway
-authorization currently denies write requests. The image and bulk-import
-endpoints are UI integration contracts and must be implemented in the backend.
-Medicine responses should provide `imageUrl` for storefront display. The
-preview response should include `importId`, `rows`, and
-`validCount`/`errorCount`; each row should provide `rowNumber`, medicine data,
-and an `errors` array. The commit response should include `importedCount` (or
-`createdCount`). The UI accepts CSV, XLSX, and PDF, plus ZIP files containing a
-sheet and the images referenced by its `imageFilename` column. The backend
-should validate file contents and never import rows with validation errors.
+Medicine and inventory writes require an `ADMIN` realm role at the gateway.
+Image upload remains a UI-only optional placeholder and is not sent to the
+backend yet. Medicine responses can provide `imageUrl` when image support is
+implemented. The preview response includes `importId`, `rows`, and
+`validCount`/`errorCount`; each row includes `rowNumber`, medicine data, and
+an `errors` array. The commit response includes `importedCount` and `status`.
+The UI accepts CSV, XLS, and XLSX for bulk import. The backend validates every
+row and rejects commit when any row contains errors.
 
 Medicine payloads follow the medicine service request model, including
 `name`, `genericName`, `manufacturer`, `category`, `description`, `price`,
 `prescriptionRequired`, `expiryDate`, and `active`. Initial stock is submitted
-separately to inventory. Every write endpoint must independently authenticate
-the caller and enforce server-side admin authorization; the client route guard
-is only a navigation/UX control.
+separately to inventory. The gateway enforces admin authorization; the client
+route guard is only a navigation/UX control.
 
 Order administration remains wired to `GET /api/admin/orders` and
 `PATCH /api/admin/orders/{id}/status`; those endpoints are not part of the

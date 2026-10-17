@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { HeartPulse, Lock, User } from "lucide-react";
+import { Eye, EyeOff, HeartPulse, Lock, User } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 import { hasRole } from "../../utils/authorization";
 import "./Auth.css";
@@ -17,6 +17,7 @@ function Login() {
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (event) => {
     setForm({
@@ -33,9 +34,13 @@ function Login() {
 
     try {
       const session = await login(form);
+      const isAdmin = hasRole(session.user, "ADMIN");
+      const requestedDestination = location.state?.from;
 
       const destination =
-        location.state?.from || (hasRole(session.user, "ADMIN") ? "/admin" : "/");
+        requestedDestination === "/admin" && !isAdmin
+          ? "/"
+          : requestedDestination || (isAdmin ? "/admin" : "/");
       navigate(destination);
     } catch (err) {
       setError(
@@ -85,13 +90,22 @@ function Login() {
           <div className="input-wrapper">
             <Lock size={18} />
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               name="password"
               placeholder="Enter your password"
               value={form.password}
               onChange={handleChange}
               required
             />
+            <button
+              type="button"
+              className="password-visibility-toggle"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
+              onClick={() => setShowPassword((visible) => !visible)}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
           </div>
 
           <button

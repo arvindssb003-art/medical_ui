@@ -37,17 +37,6 @@ export const createMedicineInventory = async (
   return response.data;
 };
 
-export const uploadMedicineImage = async (medicineId, image) => {
-  const formData = new FormData();
-  formData.append("file", image);
-  const response = await apiClient.post(
-    `/api/medicines/${medicineId}/image`,
-    formData,
-    { headers: { "Content-Type": "multipart/form-data" } }
-  );
-  return response.data;
-};
-
 export const previewMedicineImport = async (file) => {
   const formData = new FormData();
   formData.append("file", file);

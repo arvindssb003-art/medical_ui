@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import {
   ShoppingCart,
   User,
@@ -13,6 +13,7 @@ import { hasRole } from "../../utils/authorization";
 import "./Navbar.css";
 
 function Navbar() {
+  const navigate = useNavigate();
   const { user, logout, isAuthenticated } = useAuth();
   const { cartItemCount } = useCart();
 
@@ -43,6 +44,7 @@ function Navbar() {
   const handleLogout = async () => {
     setShowUserMenu(false);
     await logout();
+    navigate("/login", { replace: true });
   };
 
   return (
@@ -64,10 +66,10 @@ function Navbar() {
         </div>
 
         <nav className="nav-links">
-          <Link to="/">Home</Link>
-          <Link to="/medicines">Medicines</Link>
-          <Link to="/prescriptions">Prescriptions</Link>
-          <Link to="/orders">Orders</Link>
+          <NavLink to="/" end>Home</NavLink>
+          <NavLink to="/medicines">Medicines</NavLink>
+          <NavLink to="/prescriptions">Prescriptions</NavLink>
+          <NavLink to="/orders">Orders</NavLink>
         </nav>
 
         <div className="nav-actions">

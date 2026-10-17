@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Activity,
   FileSpreadsheet,
@@ -21,7 +21,6 @@ import {
   getAdminOrders,
   previewMedicineImport,
   setAdminMedicineActive,
-  uploadMedicineImage,
   updateAdminMedicine,
   updateAdminOrderStatus,
 } from "../services/adminApi";
@@ -89,6 +88,7 @@ function getStock(medicine) {
 }
 
 function AdminDashboard() {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [section, setSection] = useState("overview");
   const [medicines, setMedicines] = useState([]);
@@ -107,6 +107,11 @@ function AdminDashboard() {
   const [importFile, setImportFile] = useState(null);
   const [importPreview, setImportPreview] = useState(null);
   const [importing, setImporting] = useState(false);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login", { replace: true });
+  };
 
   useEffect(
     () => () => {
@@ -270,9 +275,6 @@ function AdminDashboard() {
     try {
       if (editingMedicine) {
         savedMedicine = await updateAdminMedicine(editingMedicine.id, payload);
-        if (medicineForm.image) {
-          await uploadMedicineImage(editingMedicine.id, medicineForm.image);
-        }
         setNotice("Medicine updated.");
       } else {
         savedMedicine = await createAdminMedicine(payload);
@@ -281,9 +283,6 @@ function AdminDashboard() {
           Number(medicineForm.stock),
           Number(medicineForm.reorderLevel)
         );
-        if (medicineForm.image) {
-          await uploadMedicineImage(savedMedicine.id, medicineForm.image);
-        }
         setNotice("Medicine added.");
       }
       closeMedicineForm();
@@ -298,8 +297,8 @@ function AdminDashboard() {
         savedMedicine
           ? `Medicine ${savedMedicine.id} was saved, but a follow-up step failed: ${
               saveError.response?.data?.message ||
-              "initial stock or image could not be saved"
-            }. The medicine record exists; verify stock and image before retrying.`
+              "initial stock could not be saved"
+            }. The medicine record exists; verify its initial stock before retrying.`
           : saveError.response?.data?.message ||
               "Unable to save this medicine. Please try again."
       );
@@ -367,7 +366,7 @@ function AdminDashboard() {
   const handleImportPreview = async (event) => {
     event.preventDefault();
     if (!importFile) {
-      setError("Choose a CSV, Excel, or PDF file to preview.");
+      setError("Choose a CSV or Excel file to preview.");
       return;
     }
 
@@ -489,7 +488,7 @@ function AdminDashboard() {
 
         <div className="admin-sidebar-footer">
           <span>{user?.username || user?.firstName || "Administrator"}</span>
-          <button type="button" onClick={logout}>
+          <button type="button" onClick={handleLogout}>
             <LogOut size={17} />
             Sign out
           </button>
@@ -646,9 +645,8 @@ function AdminDashboard() {
                       <div>
                         <h3 id="admin-import-title">Bulk medicine upload</h3>
                         <p>
-                          Upload CSV, Excel, or PDF. To include images, upload a
-                          ZIP containing the sheet and image files named in its
-                          imageFilename column. Review parsed rows before import.
+                          Upload a CSV or Excel file. Review each row and its
+                          validation errors before confirming the import.
                         </p>
                       </div>
                       <button
@@ -667,15 +665,15 @@ function AdminDashboard() {
                       <label className="admin-file-picker">
                         <Upload size={20} />
                         <span>
-                          {importFile?.name || "Choose a CSV, XLSX, or PDF file"}
+                          {importFile?.name || "Choose a CSV, XLSX, or XLS file"}
                         </span>
                         <input
                           type="file"
-                          accept=".csv,.xlsx,.xls,.pdf,.zip"
+                          accept=".csv,.xlsx,.xls"
                           onChange={(event) => {
                             const file = event.target.files?.[0] || null;
-                            if (file && file.size > 15 * 1024 * 1024) {
-                              setError("Bulk upload files must be 15 MB or smaller.");
+                            if (file && file.size > 10 * 1024 * 1024) {
+                              setError("Bulk upload files must be 10 MB or smaller.");
                               event.target.value = "";
                               return;
                             }
@@ -1083,14 +1081,17 @@ function AdminDashboard() {
               <label className="admin-form-wide admin-image-picker">
                 <span>
                   <ImagePlus size={17} />
-                  {editingMedicine ? "Replace medicine image" : "Medicine image"}
+                  {editingMedicine ? "Medicine image preview" : "Optional medicine image preview"}
                 </span>
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
                   onChange={handleMedicineImageChange}
                 />
-                <small>JPG, PNG, or WebP · maximum 5 MB</small>
+                <small>
+                  JPG, PNG, or WebP · maximum 5 MB. Image upload will be added
+                  with the backend image API.
+                </small>
               </label>
               {imagePreview && (
                 <div className="admin-image-preview admin-form-wide">
