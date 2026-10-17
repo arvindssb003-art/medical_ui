@@ -7,8 +7,9 @@ import {
   HeartPulse,
   ChevronDown,
 } from "lucide-react";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 import { useCart } from "../../context/CartContext";
+import { hasRole } from "../../utils/authorization";
 import "./Navbar.css";
 
 function Navbar() {
@@ -122,6 +123,16 @@ function Navbar() {
                   >
                     Profile
                   </Link>
+
+                  {hasRole(user, "ADMIN") && (
+                    <Link
+                      to="/admin"
+                      className="user-dropdown-link"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      Admin dashboard
+                    </Link>
+                  )}
 
                   <button
                     type="button"

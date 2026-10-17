@@ -196,13 +196,37 @@
 }
 .medicine-card {
   display: block;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: white;
   text-decoration: none;
   color: inherit;
+  transition: transform 160ms ease, box-shadow 160ms ease;
 }
 
 .medicine-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.medicine-card-image {
+  display: grid;
+  height: 180px;
+  place-items: center;
+  overflow: hidden;
+  background: #f0fdfa;
+  color: #0f766e;
+}
+
+.medicine-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.medicine-card-content {
+  padding: 18px;
 }
 
 .medicine-card h2 {

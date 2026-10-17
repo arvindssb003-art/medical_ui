@@ -10,7 +10,7 @@ import {
 import { useEffect, useState } from "react";
 import { getMedicineById } from "../services/medicineApi";
 import { addToCart } from "../services/cartApi";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import { useCart } from "../context/CartContext";
 import "./MedicineDetails.css";
 

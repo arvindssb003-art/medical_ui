@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   Heart,
   Minus,
+  Pill,
   Plus,
   ShoppingCart,
   ShieldCheck,
@@ -10,7 +11,7 @@ import {
 import { useEffect, useState } from "react";
 import { getMedicineById } from "../services/medicineApi";
 import { addToCart } from "../services/cartApi";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import "./MedicineDetails.css";
 
 function MedicineDetails() {
@@ -136,7 +137,14 @@ function MedicineDetails() {
       <div className="medicine-details">
         <section className="medicine-image-section">
           <div className="medicine-image-placeholder">
-            <span>Medicine Image</span>
+            {medicine.imageUrl ? (
+              <img src={medicine.imageUrl} alt={medicine.name} />
+            ) : (
+              <>
+                <Pill size={56} aria-hidden="true" />
+                <span>Medicine Image</span>
+              </>
+            )}
           </div>
         </section>
 

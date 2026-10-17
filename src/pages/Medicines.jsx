@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Pill, Search, SlidersHorizontal } from "lucide-react";
 import { getActiveMedicines } from "../services/medicineApi";
 import "./Medicines.css";
 import { Link } from "react-router-dom";
@@ -272,6 +272,13 @@ function Medicines() {
                   className="medicine-card"
                   key={medicine.id}
                 >
+                  <div className="medicine-card-image">
+                    {medicine.imageUrl ? (
+                      <img src={medicine.imageUrl} alt={medicine.name} />
+                    ) : (
+                      <Pill size={38} aria-hidden="true" />
+                    )}
+                  </div>
 
                   <div className="medicine-card-content">
 

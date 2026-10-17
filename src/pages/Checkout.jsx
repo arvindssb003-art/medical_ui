@@ -10,7 +10,7 @@ import {
   WalletCards,
   Building2,
 } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import { useCart } from "../context/CartContext";
 import { clearCart, getCart } from "../services/cartApi";
 import { createOrder, getOrderById } from "../services/orderApi";

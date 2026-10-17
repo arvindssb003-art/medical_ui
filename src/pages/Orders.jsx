@@ -6,7 +6,7 @@ import {
   Package,
   Search,
 } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import { getUserOrders } from "../services/orderApi";
 import "./Orders.css";
 

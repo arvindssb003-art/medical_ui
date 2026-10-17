@@ -16,6 +16,7 @@ import Prescriptions from "../pages/Prescriptions";
 import Profile from "../pages/Profile";
 import MedicalAssistant from "../pages/MedicalAssistant";
 import NotFound from "../pages/NotFound";
+import AdminDashboard from "../pages/AdminDashboard";
 import ProtectedRoute from "./ProtectedRoute";
 
 function AppRoutes() {
@@ -113,6 +114,15 @@ function AppRoutes() {
             <PageLayout>
               <MedicalAssistant />
             </PageLayout>
+          }
+        />
+
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <AdminDashboard />
+            </ProtectedRoute>
           }
         />
 

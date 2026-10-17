@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { HeartPulse, Lock, User } from "lucide-react";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
+import { hasRole } from "../../utils/authorization";
 import "./Auth.css";
 
 function Login() {
@@ -31,9 +32,10 @@ function Login() {
     setLoading(true);
 
     try {
-      await login(form);
+      const session = await login(form);
 
-      const destination = location.state?.from || "/";
+      const destination =
+        location.state?.from || (hasRole(session.user, "ADMIN") ? "/admin" : "/");
       navigate(destination);
     } catch (err) {
       setError(

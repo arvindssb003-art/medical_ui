@@ -10,7 +10,7 @@ import {
   Truck,
   XCircle,
 } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import { useCart } from "../context/CartContext";
 import { clearCart } from "../services/cartApi";
 import { getOrderById } from "../services/orderApi";

@@ -1,51 +1,41 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   loginUser,
   logoutUser,
   registerUser,
 } from "../services/authApi";
 import { getUserProfile } from "../services/userApi";
+import { AuthContext } from "./AuthContextValue";
 
-const AuthContext = createContext(null);
+function getStoredUser() {
+  const savedUser = localStorage.getItem("user");
+  if (!savedUser) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(savedUser);
+  } catch (error) {
+    console.error("Invalid stored user data:", error);
+    localStorage.removeItem("user");
+    return null;
+  }
+}
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [accessToken, setAccessToken] = useState(null);
-  const [refreshToken, setRefreshToken] = useState(null);
-
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    Boolean(localStorage.getItem("accessToken"))
+  const [user, setUser] = useState(getStoredUser);
+  const [accessToken, setAccessToken] = useState(() =>
+    localStorage.getItem("accessToken")
   );
-
-  useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    const savedAccessToken = localStorage.getItem("accessToken");
-    const savedRefreshToken = localStorage.getItem("refreshToken");
-
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (error) {
-        console.error("Invalid stored user data:", error);
-        localStorage.removeItem("user");
-      }
-    }
-
-    if (savedAccessToken) {
-      setAccessToken(savedAccessToken);
-    }
-
-    if (savedRefreshToken) {
-      setRefreshToken(savedRefreshToken);
-    }
-  }, []);
+  const [refreshToken, setRefreshToken] = useState(() =>
+    localStorage.getItem("refreshToken")
+  );
 
   useEffect(() => {
     const handleSessionExpired = () => {
       setAccessToken(null);
       setRefreshToken(null);
       setUser(null);
-      setIsAuthenticated(false);
     };
 
     window.addEventListener("auth:session-expired", handleSessionExpired);
@@ -67,9 +57,8 @@ export function AuthProvider({ children }) {
     localStorage.setItem("user", JSON.stringify(profile));
 
     setUser(profile);
-    setIsAuthenticated(true);
 
-    return data;
+    return { ...data, user: profile };
   };
 
   const register = async (userData) => {
@@ -91,7 +80,6 @@ export function AuthProvider({ children }) {
       setAccessToken(null);
       setRefreshToken(null);
       setUser(null);
-      setIsAuthenticated(false);
     }
   };
 
@@ -110,8 +98,4 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  return useContext(AuthContext);
 }
